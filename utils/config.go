@@ -23,19 +23,19 @@ func init() {
 		fmt.Println("config.ini not found", err)
 	}
 	loadServer(file)
-	loadData(file)
+	loadDatabase(file)
 }
 
 func loadServer(file *ini.File) {
 	AppMode = file.Section("server").Key("AppMode").MustString("debug")
-	HttpPort = file.Section("server").Key("HttpPort").MustString(":8080")
+	HttpPort = file.Section("server").Key("HttpPort").MustString(":3000")
 	JwtKey = file.Section("server").Key("JwtKey").MustString("89js82js72")
 }
 
-func loadData(file *ini.File) {
-	DbHost = file.Section("database").Key("DbHost").MustString("localhost")
+func loadDatabase(file *ini.File) {
+	DbHost = file.Section("database").Key("DbHost").MustString("127.0.0.1")
 	DbPort = file.Section("database").Key("DbPort").MustString("3306")
 	DbUser = file.Section("database").Key("DbUser").MustString("root")
-	DbPassWord = file.Section("database").Key("DbPassWord").String()
-	DbName = file.Section("database").Key("DbName").MustString("mydb")
+	DbPassWord = file.Section("database").Key("DbPassWord").MustString("root")
+	DbName = file.Section("database").Key("DbName").MustString("test")
 }

@@ -15,7 +15,7 @@ var db *gorm.DB
 var err error
 
 func InitDB() {
-	dns := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		utils.DbUser,
 		utils.DbPassWord,
 		utils.DbHost,
@@ -23,7 +23,7 @@ func InitDB() {
 		utils.DbName,
 	)
 
-	db, err = gorm.Open(mysql.Open(dns), &gorm.Config{
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:                                   logger.Default.LogMode(logger.Silent),
 		DisableForeignKeyConstraintWhenMigrating: true,
 		SkipDefaultTransaction:                   true,

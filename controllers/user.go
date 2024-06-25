@@ -9,7 +9,7 @@ import (
 )
 
 func GetUsers(c *gin.Context) {
-	pageSize, _ := strconv.Atoi(c.Query("pagesiz"))
+	pageSize, _ := strconv.Atoi(c.Query("pagesize"))
 	pageNum, _ := strconv.Atoi(c.Query("pagenum"))
 	username := c.Query("username")
 
@@ -30,5 +30,4 @@ func GetUsers(c *gin.Context) {
 		"total":   total,
 		"message": errmsg.GetErrMsg(code),
 	})
-
 }
