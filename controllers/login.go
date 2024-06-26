@@ -3,11 +3,11 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"goIland/middleware"
-	"goIland/models"
-	"goIland/utils/errmsg"
 	"net/http"
 	"time"
+	"web-server/middleware"
+	"web-server/models"
+	"web-server/utils/errmsg"
 )
 
 func LoginFront(c *gin.Context) {

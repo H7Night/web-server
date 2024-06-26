@@ -1,8 +1,8 @@
 package main
 
 import (
-	"goIland/models"
-	"goIland/routes"
+	"web-server/models"
+	"web-server/routes"
 )
 
 func main() {

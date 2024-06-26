@@ -1,9 +1,9 @@
 package models
 
 import (
-	"goIland/utils/errmsg"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"web-server/utils/errmsg"
 )
 
 type User struct {

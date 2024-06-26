@@ -3,11 +3,11 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"goIland/utils"
-	"goIland/utils/errmsg"
 	"net/http"
 	"strings"
 	"time"
+	"web-server/utils"
+	"web-server/utils/errmsg"
 )
 
 type JWT struct {

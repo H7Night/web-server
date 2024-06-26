@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"goIland/controllers"
-	"goIland/middleware"
-	"goIland/utils"
+	"web-server/controllers"
+	"web-server/middleware"
+	"web-server/utils"
 )
 
 func InitRouter() {

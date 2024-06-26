@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"goIland/models"
-	"goIland/utils/errmsg"
 	"net/http"
 	"strconv"
+	"web-server/models"
+	"web-server/utils/errmsg"
 )
 
 func GetUsers(c *gin.Context) {

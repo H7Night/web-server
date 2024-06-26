@@ -2,13 +2,13 @@ package models
 
 import (
 	"fmt"
-	"goIland/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"os"
 	"time"
+	"web-server/utils"
 )
 
 var db *gorm.DB
