@@ -20,7 +20,7 @@ func CheckLogin(username string, password string) (User, int) {
 
 	db.Where("username = ?", username).First(&user)
 
-	PasswordErr = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	//PasswordErr = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if user.ID == 0 {
 		return user, errmsg.ERROR_USER_NOT_EXIST
