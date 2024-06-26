@@ -12,6 +12,7 @@ func InitRouter() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(middleware.AddCros()) // Add the CORS middleware
 
 	auth := r.Group("api/v1")
 	auth.Use(middleware.JWTAuth())
