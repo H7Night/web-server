@@ -5,6 +5,8 @@ go 1.22
 toolchain go1.22.0
 
 require (
+	github.com/gin-contrib/cors v1.5.0
+	github.com/go-playground/universal-translator v0.18.1
 	github.com/gin-contrib/multitemplate v0.0.0-20231230012943-32b233489a81
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
@@ -23,7 +25,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
