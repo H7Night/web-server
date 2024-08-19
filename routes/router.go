@@ -14,13 +14,17 @@ func InitRouter() {
 	r.Use(gin.Recovery())
 	r.Use(middleware.AddCros()) // Add the CORS middleware
 
-	auth := r.Group("api/v1")
+	auth := r.Group("api")
+	auth.Use(middleware.JWTAuth())
+	{
+		auth.POST("/register", controllers.AddUser)
+	}
 	auth.Use(middleware.JWTAuth())
 	{
 		auth.GET("/users", controllers.GetUsers)
 	}
 
-	public := r.Group("api/v1")
+	public := r.Group("api")
 	{
 		public.POST("/login", controllers.Login)
 	}
