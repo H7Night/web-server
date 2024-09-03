@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"web-server/controllers"
+	api "web-server/api"
 	"web-server/middleware"
 	"web-server/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() {
@@ -12,22 +13,25 @@ func InitRouter() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	r.Use(middleware.AddCros()) // Add the CORS middleware
+	r.Use(middleware.AddCros())
+
+	r.POST("/adduser", api.AddUser)
+	r.DELETE("/deleteuser", api.DeleteUser)
 
 	auth := r.Group("api")
 	auth.Use(middleware.JWTAuth())
 	{
-		auth.POST("/register", controllers.AddUser)
+		auth.POST("/register", api.AddUser)
 	}
-	auth.Use(middleware.JWTAuth())
-	{
-		auth.GET("/users", controllers.GetUsers)
-	}
+	// auth.Use(middleware.JWTAuth())
+	// {
+	// 	auth.GET("/users", api.GetUsers)
+	// }
 
-	public := r.Group("api")
-	{
-		public.POST("/login", controllers.Login)
-	}
+	// public := r.Group("api")
+	// {
+	// 	public.POST("/login", api.Login)
+	// }
 
 	r.Run(utils.HttpPort)
 }

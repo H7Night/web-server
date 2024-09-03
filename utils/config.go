@@ -2,19 +2,21 @@ package utils
 
 import (
 	"fmt"
+
 	"gopkg.in/ini.v1"
 )
 
 var (
-	AppMode  string
-	HttpPort string
-	JwtKey   string
+	AppMode  string //模式
+	HttpPort string //端口
+	JwtKey   string //Key
 
-	DbHost     string
-	DbPort     string
-	DbUser     string
-	DbPassWord string
-	DbName     string
+	// 数据库
+	DbHost     string //IP
+	DbPort     string //端口
+	DbUser     string //用户
+	DbPassWord string //密码
+	DbName     string //库名
 )
 
 func init() {
