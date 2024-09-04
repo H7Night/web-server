@@ -16,7 +16,10 @@ func InitRouter() {
 	r.Use(middleware.AddCros())
 
 	r.POST("/adduser", api.AddUser)
-	r.DELETE("/deleteuser", api.DeleteUser)
+	r.DELETE("/deleteuser/:id", api.DeleteUser)
+	r.PUT("/updateuser/:id", api.UpdateUser)
+	r.GET("/getuser/:id", api.GetUser)
+	r.GET("/getuserpage", api.GetUserPage)
 
 	auth := r.Group("api")
 	auth.Use(middleware.JWTAuth())
