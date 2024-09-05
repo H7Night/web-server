@@ -48,8 +48,8 @@ func JWTAuth() gin.HandlerFunc {
 		tokenHeader := c.Request.Header.Get("Authorization")
 		if tokenHeader == "" {
 			c.JSON(http.StatusOK, gin.H{
-				"status":  errmsg.ERROR_TOKEN_EXIST,
-				"message": errmsg.GetErrMsg(errmsg.ERROR_TOKEN_EXIST),
+				"status":  errmsg.ErrorTokenExist,
+				"message": errmsg.GetErrMsg(errmsg.ErrorTokenExist),
 			})
 			c.Abort()
 			return
@@ -57,8 +57,8 @@ func JWTAuth() gin.HandlerFunc {
 		parts := strings.SplitN(tokenHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
 			c.JSON(http.StatusOK, gin.H{
-				"status":  errmsg.ERROR_TOKEN_TYPE_WRONG,
-				"message": errmsg.GetErrMsg(errmsg.ERROR_TOKEN_TYPE_WRONG),
+				"status":  errmsg.ErrorTokenTypeWrong,
+				"message": errmsg.GetErrMsg(errmsg.ErrorTokenTypeWrong),
 			})
 			c.Abort()
 			return
@@ -66,16 +66,16 @@ func JWTAuth() gin.HandlerFunc {
 		claims, err := NewJWT().ParseToken(parts[1])
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"status":  errmsg.ERROR_TOKEN_WRONG,
-				"message": errmsg.GetErrMsg(errmsg.ERROR_TOKEN_WRONG),
+				"status":  errmsg.ErrorTokenWrong,
+				"message": errmsg.GetErrMsg(errmsg.ErrorTokenWrong),
 			})
 			c.Abort()
 			return
 		}
 		if time.Now().Unix() > claims.ExpiresAt.Unix() {
 			c.JSON(http.StatusOK, gin.H{
-				"status":  errmsg.ERROR_TOKEN_RUNTIME,
-				"message": errmsg.GetErrMsg(errmsg.ERROR_TOKEN_RUNTIME),
+				"status":  errmsg.ErrorTokenRuntime,
+				"message": errmsg.GetErrMsg(errmsg.ErrorTokenRuntime),
 			})
 			c.Abort()
 			return
