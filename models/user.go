@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"golang.org/x/crypto/bcrypt"
+	"log"
 	"web-server/utils/errmsg"
 
 	"gorm.io/gorm"
@@ -88,13 +90,17 @@ func UpdateUser(id uint, data *User) int {
 	if data.Role == 0 {
 		data.Role = user.Role
 	}
-
-	updateData := map[string]interface{}{
-		"name": data.Name,
-		"role": data.Role,
+	if data.Password == "" {
+		data.Password = user.Password
 	}
 
-	err = db.Model(&User{}).Where("id = ?", id).Updates(updateData).Error
+	// 更新用户数据
+	user.Name = data.Name
+	user.Role = data.Role
+	user.Password = data.Password
+
+	// 使用 Save 而不是 Updates 确保触发钩子
+	err = db.Save(&user).Error
 	if err != nil {
 		return errmsg.Error
 	}
@@ -112,6 +118,7 @@ func GetUser(id int) (User, int) {
 	return user, errmsg.Success
 }
 
+// GetUserPage 获取用户列表
 func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int) {
 	var users []User
 	var total int64
@@ -136,4 +143,47 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 		return users, 0, errmsg.Error
 	}
 	return users, total, errmsg.Success
+}
+
+// BeforeCreate 密码加密；gorm的钩子
+func (u *User) BeforeCreate(_ *gorm.DB) (err error) {
+	u.Password = ScryptPw(u.Password)
+	return nil
+}
+
+// BeforeUpdate 更新密码时加密钩子
+func (u *User) BeforeUpdate(_ *gorm.DB) (err error) {
+	u.Password = ScryptPw(u.Password)
+	return nil
+}
+
+// ScryptPw 生成密码
+func ScryptPw(password string) string {
+	const cost = 10
+
+	HashPw, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return string(HashPw)
+}
+
+// CheckLogin 登录校验
+func CheckLogin(username string, password string, state string) (User, int) {
+	var user User
+	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err := db.Where("name =?", username).First(&user).Error
+
+	if pwdErr != nil && !errors.Is(pwdErr, gorm.ErrRecordNotFound) {
+		return user, errmsg.ErrorPasswordWrong
+	}
+	if err != nil {
+		return user, errmsg.ErrorUserNotExist
+	}
+	// 后台登录校验用户角色
+	if state == "back" && user.Role != 1 {
+		return user, errmsg.ErrorUserNoRight
+	}
+	return user, errmsg.Success
 }
