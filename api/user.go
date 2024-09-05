@@ -28,7 +28,7 @@ func AddUser(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	code := models.CheckUser(0, data.Username)
+	code := models.CheckUser(0, data.Name)
 	if code == errmsg.Success {
 		models.CreateUser(&data)
 	}
@@ -79,7 +79,7 @@ func GetUser(c *gin.Context) {
 	data, code := models.GetUser(id)
 
 	maps["id"] = data.ID
-	maps["username"] = data.Username
+	maps["name"] = data.Name
 	maps["role"] = data.Role
 	c.JSON(
 		http.StatusOK, gin.H{
@@ -99,6 +99,8 @@ func GetUserPage(c *gin.Context) {
 	switch {
 	case pageSize >= 100:
 		pageSize = 100
+	case pageSize <= 0:
+		pageSize = 10
 	case pageNum <= 0:
 		pageNum = 10
 	case pageNum == 0:

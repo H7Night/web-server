@@ -9,10 +9,9 @@ import (
 
 type User struct {
 	gorm.Model
-	ID       uint   `gorm:"primary_key; auto_increment" json:"id"`
-	Username string `gorm:"type:varchar(20); not null" json:"username" validate:"required,min=4,max=12" label:"用户名"`
+	Name     string `gorm:"type:varchar(20); not null" json:"name" validate:"required,min=4,max=12" label:"用户名"`
 	Password string `gorm:"type:varchar(500); not null" json:"password" validate:"required,min=6,max=120" label:"密码"`
-	Role     int    `gorm:"type:int; default:2" json:"role" validate:"required,gte=2" label:"角色"`
+	Role     int    `gorm:"type:int; default:2" json:"role" default:"2" label:"角色"`
 }
 
 // CheckUser 检查
@@ -26,18 +25,18 @@ func CheckUser(id uint, name string) int {
 		// 判断用户是否存在，unscoped 可查出已被删除用户和物理删除用户
 		err = db.Unscoped().Where("id = ?", id).First(&user).Error
 	} else if name != "" {
-		err = db.Where("username = ?", name).First(&user).Error
+		err = db.Where("name = ?", name).First(&user).Error
 	}
 
 	// 如果查不到这个用户，或用户的 delete_at 不为空，则证明用户已被删除
-	if errors.Is(err, gorm.ErrRecordNotFound) || (id != 0 && user.DeletedAt.Valid) {
+	if (errors.Is(err, gorm.ErrRecordNotFound) || (id != 0 && user.DeletedAt.Valid)) && name == "" {
 		return errmsg.ErrorUserNotExist
-	} else if err != nil {
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return errmsg.Error
 	}
 
 	// 判断时候有重名
-	if name != "" && user.Username == name {
+	if name != "" && user.Name == name {
 		return errmsg.ErrorUsernameUsed
 	}
 	return errmsg.Success
@@ -45,7 +44,7 @@ func CheckUser(id uint, name string) int {
 
 // CreateUser 新增
 func CreateUser(data *User) int {
-	code := CheckUser(0, data.Username)
+	code := CheckUser(0, data.Name)
 	if code != errmsg.Success {
 		return errmsg.ErrorUsernameUsed
 	}
@@ -74,24 +73,33 @@ func DeleteUser(id uint) int {
 
 // UpdateUser 更新用户
 func UpdateUser(id uint, data *User) int {
-
+	// 检查用户是否存在
 	code := CheckUser(id, "")
-	if code == errmsg.Success {
-		updateData := map[string]interface{}{
-			"username": data.Username,
-			"role":     data.Role,
-		}
-		err = db.Model(&User{}).Where("id = ?", id).Updates(updateData).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errmsg.ErrorUserNotExist
-			}
-			return errmsg.Error
-		}
-		return errmsg.Success
-	} else {
+	if code != errmsg.Success {
 		return code
 	}
+
+	var user User
+	db.Where("id = ?", id).First(&user)
+	//没更新则用原数据
+	if data.Name == "" {
+		data.Name = user.Name
+	}
+	if data.Role == 0 {
+		data.Role = user.Role
+	}
+
+	updateData := map[string]interface{}{
+		"name": data.Name,
+		"role": data.Role,
+	}
+
+	err = db.Model(&User{}).Where("id = ?", id).Updates(updateData).Error
+	if err != nil {
+		return errmsg.Error
+	}
+	return errmsg.Success
+
 }
 
 // GetUser 查询用户
@@ -108,12 +116,12 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 	var users []User
 	var total int64
 
-	query := db.Select("id,username,role,created_at").
+	query := db.Select("id,name,role,created_at").
 		Limit(pageSize).
 		Offset((pageNum - 1) * pageSize)
 
 	if username != "" {
-		query = query.Where("username like ?", "%"+username+"%")
+		query = query.Where("name like ?", "%"+username+"%")
 	}
 
 	if err := query.Find(&users).Count(&total).Error; err != nil {
@@ -122,7 +130,7 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 
 	countQuery := db.Model(&User{})
 	if username != "" {
-		countQuery.Where("username like ?", "%"+username+"%")
+		countQuery.Where("name like ?", "%"+username+"%")
 	}
 	if err := countQuery.Count(&total).Error; err != nil {
 		return users, 0, errmsg.Error
