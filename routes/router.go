@@ -22,7 +22,7 @@ func InitRouter() {
 	r.GET("/getuserpage", api.GetUserPage)
 
 	auth := r.Group("api")
-	auth.Use(middleware.JWTAuth())
+	auth.Use(middleware.JwtToken())
 	{
 		auth.POST("/register", api.AddUser)
 	}
@@ -31,10 +31,10 @@ func InitRouter() {
 	// 	auth.GET("/users", api.GetUsers)
 	// }
 
-	// public := r.Group("api")
-	// {
-	// 	public.POST("/login", api.Login)
-	// }
+	public := r.Group("api")
+	{
+		public.POST("/login", api.Login)
+	}
 
 	r.Run(utils.HttpPort)
 }
