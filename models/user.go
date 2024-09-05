@@ -18,48 +18,48 @@ type User struct {
 // CheckUser 检查
 // 只传id进来，更新时查询id是否对应
 // 只传name进来，新增时查询是否有同名
-func CheckUser(id *uint, name *string) int {
+func CheckUser(id uint, name string) int {
 	var user User
 	var err error
 
-	if id != nil {
+	if id != 0 {
 		// 判断用户是否存在，unscoped 可查出已被删除用户和物理删除用户
-		err = db.Unscoped().Where("id = ?", *id).First(&user).Error
-	} else if name != nil {
-		err = db.Where("username = ?", *name).First(&user).Error
+		err = db.Unscoped().Where("id = ?", id).First(&user).Error
+	} else if name != "" {
+		err = db.Where("username = ?", name).First(&user).Error
 	}
 
 	// 如果查不到这个用户，或用户的 delete_at 不为空，则证明用户已被删除
-	if errors.Is(err, gorm.ErrRecordNotFound) || (id != nil && user.DeletedAt.Valid) {
-		return errmsg.ERROR_USER_NOT_EXIST
+	if errors.Is(err, gorm.ErrRecordNotFound) || (id != 0 && user.DeletedAt.Valid) {
+		return errmsg.ErrorUserNotExist
 	} else if err != nil {
-		return errmsg.ERROR
+		return errmsg.Error
 	}
 
 	// 判断时候有重名
-	if name != nil && user.Username == *name {
-		return errmsg.ERROR_USERNAME_USED
+	if name != "" && user.Username == name {
+		return errmsg.ErrorUsernameUsed
 	}
-	return errmsg.SUCCESS
+	return errmsg.Success
 }
 
 // CreateUser 新增
 func CreateUser(data *User) int {
-	code := CheckUser(nil, &data.Username)
-	if code != errmsg.SUCCESS {
-		return errmsg.ERROR_USERNAME_USED
+	code := CheckUser(0, data.Username)
+	if code != errmsg.Success {
+		return errmsg.ErrorUsernameUsed
 	}
 	err := db.Create(&data).Error
 	if err != nil {
-		return errmsg.ERROR
+		return errmsg.Error
 	}
-	return errmsg.SUCCESS
+	return errmsg.Success
 }
 
 // DeleteUser 删除
 func DeleteUser(id uint) int {
-	code := CheckUser(&id, nil)
-	if code != errmsg.SUCCESS {
+	code := CheckUser(id, "")
+	if code != errmsg.Success {
 		return code
 	}
 	var user User
@@ -67,16 +67,16 @@ func DeleteUser(id uint) int {
 
 	err = db.Where("id = ?", id).Delete(&user).Error
 	if err != nil {
-		return errmsg.ERROR
+		return errmsg.Error
 	}
-	return errmsg.SUCCESS
+	return errmsg.Success
 }
 
 // UpdateUser 更新用户
 func UpdateUser(id uint, data *User) int {
 
-	code := CheckUser(&id, nil)
-	if code == errmsg.SUCCESS {
+	code := CheckUser(id, "")
+	if code == errmsg.Success {
 		updateData := map[string]interface{}{
 			"username": data.Username,
 			"role":     data.Role,
@@ -84,11 +84,11 @@ func UpdateUser(id uint, data *User) int {
 		err = db.Model(&User{}).Where("id = ?", id).Updates(updateData).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errmsg.ERROR_USER_NOT_EXIST
+				return errmsg.ErrorUserNotExist
 			}
-			return errmsg.ERROR
+			return errmsg.Error
 		}
-		return errmsg.SUCCESS
+		return errmsg.Success
 	} else {
 		return code
 	}
@@ -99,9 +99,9 @@ func GetUser(id int) (User, int) {
 	var user User
 	err := db.Limit(1).Where("id = ?", id).Find(&user).Error
 	if err != nil {
-		return user, errmsg.ERROR
+		return user, errmsg.Error
 	}
-	return user, errmsg.SUCCESS
+	return user, errmsg.Success
 }
 
 func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int) {
@@ -117,7 +117,7 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 	}
 
 	if err := query.Find(&users).Count(&total).Error; err != nil {
-		return users, 0, errmsg.ERROR
+		return users, 0, errmsg.Error
 	}
 
 	countQuery := db.Model(&User{})
@@ -125,7 +125,7 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 		countQuery.Where("username like ?", "%"+username+"%")
 	}
 	if err := countQuery.Count(&total).Error; err != nil {
-		return users, 0, errmsg.ERROR
+		return users, 0, errmsg.Error
 	}
-	return users, total, errmsg.SUCCESS
+	return users, total, errmsg.Success
 }
