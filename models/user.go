@@ -146,7 +146,7 @@ func GetUserPage(username string, pageSize int, pageNum int) ([]User, int64, int
 	return users, total, errmsg.Success
 }
 
-// BeforeCreate 密码加密；gorm的钩子
+// BeforeCreate 创建用户时密码加密；gorm的钩子
 func (u *User) BeforeCreate(_ *gorm.DB) (err error) {
 	u.Password = ScryptPw(u.Password)
 	return nil
