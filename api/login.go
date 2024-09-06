@@ -1,13 +1,14 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 	"web-server/middleware"
 	"web-server/models"
 	"web-server/utils/errmsg"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func Login(c *gin.Context) {
@@ -15,7 +16,13 @@ func Login(c *gin.Context) {
 	_ = c.ShouldBind(&formData)
 	var code int
 
-	formData, code = models.CheckLogin(formData.Name, formData.Password, c.Param("state"))
+	// 从请求中获取 state 参数，用于区分前台登录还是后台登录
+	state := c.Query("state") // 假设 state 是作为查询参数传递的
+	if state == "" {
+		state = c.PostForm("state") // 如果是POST请求，可以通过form数据获取
+	}
+
+	formData, code = models.CheckLogin(formData.Name, formData.Password, state)
 	if code == errmsg.Success {
 		setToken(c, formData)
 	}

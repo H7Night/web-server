@@ -2,9 +2,10 @@ package models
 
 import (
 	"errors"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"web-server/utils/errmsg"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +14,7 @@ type User struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(20); not null" json:"name" validate:"required,min=4,max=12" label:"用户名"`
 	Password string `gorm:"type:varchar(500); not null" json:"password" validate:"required,min=6,max=120" label:"密码"`
-	Role     int    `gorm:"type:int; default:2" json:"role" default:"2" label:"角色"`
+	Role     int    `gorm:"type:int; default:2" json:"role" label:"角色"`
 }
 
 // CheckUser 检查
@@ -172,15 +173,18 @@ func ScryptPw(password string) string {
 // CheckLogin 登录校验
 func CheckLogin(username string, password string, state string) (User, int) {
 	var user User
-	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	err := db.Where("name =?", username).First(&user).Error
 
-	if pwdErr != nil && !errors.Is(pwdErr, gorm.ErrRecordNotFound) {
-		return user, errmsg.ErrorPasswordWrong
-	}
+	err := db.Where("name =?", username).First(&user).Error
 	if err != nil {
 		return user, errmsg.ErrorUserNotExist
 	}
+
+	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if pwdErr != nil {
+		return user, errmsg.ErrorPasswordWrong
+	}
+
 	// 后台登录校验用户角色
 	if state == "back" && user.Role != 1 {
 		return user, errmsg.ErrorUserNoRight
