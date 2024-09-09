@@ -16,23 +16,16 @@ func Login(c *gin.Context) {
 	var formData models.User
 	_ = c.ShouldBind(&formData)
 	var code int
-	var state bool
+	var state string
 	//登录校验
 	formData, state, code = models.CheckLogin(formData.Name, formData.Password)
 	if code == errmsg.Success {
-		setToken(c, formData)
+		setToken(c, formData, state)
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  code,
-		"id":      formData.ID,
-		"state":   state,
-		"data":    formData.Name,
-		"message": errmsg.GetErrMsg(code),
-	})
 }
 
 // token 生成函数
-func setToken(c *gin.Context, user models.User) {
+func setToken(c *gin.Context, user models.User, state string) {
 	j := middleware.NewJWT()
 	claims := middleware.MyClaims{
 		Username: user.Name,
@@ -53,6 +46,7 @@ func setToken(c *gin.Context, user models.User) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  errmsg.Success,
 		"id":      user.ID,
+		"state":   state,
 		"data":    user.Name,
 		"message": errmsg.Success,
 		"token":   token,

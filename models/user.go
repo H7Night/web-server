@@ -171,24 +171,24 @@ func ScryptPw(password string) string {
 }
 
 // CheckLogin 登录校验
-func CheckLogin(username string, password string) (User, bool, int) {
+func CheckLogin(username string, password string) (User, string, int) {
 	var user User
 
 	err := db.Where("name =?", username).First(&user).Error
 	if err != nil {
-		return user, false, errmsg.ErrorUserNotExist
+		return user, "front", errmsg.ErrorUserNotExist
 	}
 
 	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if pwdErr != nil {
-		return user, false, errmsg.ErrorPasswordWrong
+		return user, "front", errmsg.ErrorPasswordWrong
 	}
 
 	// 登录校验用户角色是否后台角色
 
 	if user.Role == 1 {
-		return user, true, errmsg.Success
+		return user, "back", errmsg.Success
 	}
-	return user, false, errmsg.Success
+	return user, "back", errmsg.Success
 }
