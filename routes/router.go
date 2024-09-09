@@ -21,6 +21,7 @@ func InitRouter() {
 	r.GET("/getuser/:id", api.GetUser)
 	r.GET("/getuserpage", api.GetUserPage)
 
+	r.POST("/login", api.Login)
 	auth := r.Group("api")
 	auth.Use(middleware.JwtToken())
 	{
@@ -30,11 +31,6 @@ func InitRouter() {
 	// {
 	// 	auth.GET("/users", api.GetUsers)
 	// }
-
-	public := r.Group("api")
-	{
-		public.POST("/login", api.Login)
-	}
 
 	r.Run(utils.HttpPort)
 }

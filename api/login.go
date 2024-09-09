@@ -16,14 +16,9 @@ func Login(c *gin.Context) {
 	var formData models.User
 	_ = c.ShouldBind(&formData)
 	var code int
-
-	// 从请求中获取 state 参数，用于区分前台登录还是后台登录
-	state := c.Query("state")
-	if state == "" {
-		state = c.PostForm("state")
-	}
+	var state bool
 	//登录校验
-	formData, code = models.CheckLogin(formData.Name, formData.Password, state)
+	formData, state, code = models.CheckLogin(formData.Name, formData.Password)
 	if code == errmsg.Success {
 		setToken(c, formData)
 	}
