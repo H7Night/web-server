@@ -15,11 +15,11 @@ func InitRouter() {
 	r.Use(gin.Recovery())
 	r.Use(middleware.AddCros())
 
-	r.POST("/adduser", api.AddUser)
-	r.DELETE("/deleteuser/:id", api.DeleteUser)
-	r.PUT("/updateuser/:id", api.UpdateUser)
-	r.GET("/getuser/:id", api.GetUser)
-	r.GET("/getuserpage", api.GetUserPage)
+	r.POST("/createUser", api.AddUser)
+	r.DELETE("/deleteUser/:id", api.DeleteUser)
+	r.PUT("/updateUser/:id", api.UpdateUser)
+	r.GET("/getUser/:id", api.GetUser)
+	r.GET("/getUserPage", api.GetUserPage)
 
 	r.POST("/login", api.Login)
 	auth := r.Group("api")

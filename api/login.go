@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 	"web-server/middleware"
@@ -21,6 +22,8 @@ func Login(c *gin.Context) {
 	formData, state, code = models.CheckLogin(formData.Name, formData.Password)
 	if code == errmsg.Success {
 		setToken(c, formData, state)
+	} else {
+		fmt.Println("login faild")
 	}
 }
 
@@ -37,12 +40,9 @@ func setToken(c *gin.Context, user models.User, state string) {
 	}
 	token, err := j.CreateToken(claims)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  errmsg.Error,
-			"message": errmsg.GetErrMsg(errmsg.Error),
-			"token":   token,
-		})
+		panic(err)
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  errmsg.Success,
 		"id":      user.ID,
