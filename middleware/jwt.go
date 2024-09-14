@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strings"
 	"web-server/utils"
-	"web-server/utils/errmsg"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type JWT struct {
@@ -25,13 +25,6 @@ type MyClaims struct {
 	jwt.RegisteredClaims
 }
 
-var (
-	TokenExpired     = errors.New("token is expired")
-	TokenNotValidYet = errors.New("token not active yet")
-	TokenMalformed   = errors.New("that's not even a token")
-	TokenInvalid     = errors.New("couldn't handle this token")
-)
-
 // CreateToken sha256生成Token
 func (j *JWT) CreateToken(claims MyClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -47,67 +40,48 @@ func (j *JWT) ParseToken(tokenString string) error {
 	if token.Valid {
 		return nil
 	} else if errors.Is(err, jwt.ErrTokenMalformed) {
-		return TokenMalformed
+		return errors.New("that's not even a token")
 	} else if errors.Is(err, jwt.ErrTokenExpired) {
-		return TokenExpired
+		return errors.New("token is expired")
 	} else if errors.Is(err, jwt.ErrSignatureInvalid) {
-		return TokenInvalid
+		return errors.New("couldn't handle this token")
 	} else {
-		return TokenNotValidYet
+		return errors.New("token not active yet")
 	}
 }
 
 // JwtToken jwt 中间件
 func JwtToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var code int
-		tokenString := c.Request.Header.Get("Authorization")
-		if tokenString == "" {
-			code = errmsg.ErrorTokenExist
-			c.JSON(http.StatusOK, gin.H{
-				"status":  code,
-				"message": errmsg.GetErrMsg(code),
+		authHeader := c.Request.Header.Get("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Authorization header is missing",
 			})
 			c.Abort()
 			return
 		}
-		checkToken := strings.Split(tokenString, " ")
-		if len(checkToken) == 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  code,
-				"message": errmsg.GetErrMsg(code),
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid Authorization header format",
 			})
 			c.Abort()
 			return
 		}
 
-		if len(checkToken) != 2 || checkToken[0] != "Bearer" {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  code,
-				"message": errmsg.GetErrMsg(code),
-			})
-			c.Abort()
-			return
-		}
+		tokenString := parts[1]
 		j := NewJWT()
 		// 解析 token
-		err := j.ParseToken(checkToken[1])
+		err := j.ParseToken(tokenString)
 		if err != nil {
-			if errors.Is(err, TokenExpired) {
-				c.JSON(http.StatusOK, gin.H{
-					"status":  errmsg.Error,
-					"message": "token is expired",
-					"data":    nil,
-				})
-				c.Abort()
-				return
+			var response gin.H
+			if err == jwt.ErrSignatureInvalid {
+				response = gin.H{"error": "Invalid token signature"}
+			} else {
+				response = gin.H{"error": "Failed to parse token"}
 			}
-			// 其他错误
-			c.JSON(http.StatusOK, gin.H{
-				"status":  errmsg.Error,
-				"message": err.Error(),
-				"data":    nil,
-			})
+			c.JSON(http.StatusUnauthorized, response)
 			c.Abort()
 			return
 		}

@@ -13,18 +13,24 @@ import (
 func AddUser(c *gin.Context) {
 	var data models.User
 	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid request data")})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "invalid request data"),
+		})
 		return
 	}
 
 	if err := models.CheckUser(0, data.Name); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "user check failed")})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "user check failed"),
+		})
 		return
 	}
 
 	err := models.CreateUser(&data)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "user creation failed")})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "user creation failed"),
+		})
 		return
 	}
 
@@ -40,12 +46,16 @@ func DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid id")})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "invalid id"),
+		})
 		return
 	}
 
 	if err := models.DeleteUser(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to delete user")})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "failed to delete user"),
+		})
 		return
 	}
 
@@ -61,17 +71,23 @@ func UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid id")})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "invalid id"),
+		})
 		return
 	}
 
 	if err := models.CheckUser(uint(id), ""); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "user check failed")})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "user check failed"),
+		})
 		return
 	}
 
 	if err := models.UpdateUser(uint(id), &data); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to update user")})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "failed to update user"),
+		})
 		return
 	}
 
@@ -118,27 +134,29 @@ func GetUserPage(c *gin.Context) {
 	if pageSizeStr != "" {
 		pageSize, err = strconv.Atoi(pageSizeStr)
 		if err != nil || pageSize < 0 {
-			pageSize = 10 // Default page size
+			pageSize = 10 // 最小10
 		}
 		if pageSize > 100 {
-			pageSize = 100 // Maximum page size
+			pageSize = 100 // 最大100
 		}
 	} else {
-		pageSize = 10 // Default page size if not provided
+		pageSize = 10 // 默认10
 	}
 
 	if pageNumStr != "" {
 		pageNum, err = strconv.Atoi(pageNumStr)
 		if err != nil || pageNum <= 0 {
-			pageNum = 1 // Default page number
+			pageNum = 1 // 最小1
 		}
 	} else {
-		pageNum = 1 // Default page number if not provided
+		pageNum = 1 // 默认1
 	}
 
 	data, total, err := models.GetUserPage(username, pageSize, pageNum)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to get user page")})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "failed to get user page"),
+		})
 		return
 	}
 
