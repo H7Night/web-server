@@ -1,5 +1,7 @@
 package errmsg
 
+import "github.com/gin-gonic/gin"
+
 const (
 	Success = 200
 	Error   = 500
@@ -29,4 +31,16 @@ var codeMsg = map[int]string{
 
 func GetErrMsg(code int) string {
 	return codeMsg[code]
+}
+
+//
+func Response(c *gin.Context, code int, message string, data interface{}) {
+	if message == "" {
+		message = GetErrMsg(code)
+	}
+	c.JSON(code, gin.H{
+		"status":  code,
+		"message": message,
+		"data":    data,
+	})
 }
