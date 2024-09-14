@@ -4,116 +4,148 @@ import (
 	"net/http"
 	"strconv"
 	"web-server/models"
-	"web-server/utils/errmsg"
-	"web-server/utils/validator"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 // AddUser 添加用户
 func AddUser(c *gin.Context) {
 	var data models.User
-	var msg string
-	var validCode int
-	_ = c.ShouldBindJSON(&data)
-
-	msg, validCode = validator.Validate(&data)
-	if validCode != errmsg.Success {
-		c.JSON(
-			http.StatusOK, gin.H{
-				"status":  validCode,
-				"message": msg,
-			},
-		)
-		c.Abort()
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid request data")})
 		return
 	}
-	code := models.CheckUser(0, data.Name)
-	if code == errmsg.Success {
-		models.CreateUser(&data)
+
+	if err := models.CheckUser(0, data.Name); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "user check failed")})
+		return
 	}
-	c.JSON(
-		http.StatusOK, gin.H{
-			"status":  code,
-			"message": errmsg.GetErrMsg(code),
-		},
-	)
+
+	err := models.CreateUser(&data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "user creation failed")})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "success",
+		"data":    data,
+	})
 }
 
 // DeleteUser 删除用户
 func DeleteUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid id")})
+		return
+	}
 
-	code := models.DeleteUser(uint(id))
+	if err := models.DeleteUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to delete user")})
+		return
+	}
 
-	c.JSON(
-		http.StatusOK, gin.H{
-			"status":  code,
-			"message": errmsg.GetErrMsg(code),
-		},
-	)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "User deleted successfully",
+	})
 }
 
 // UpdateUser 修改用户
 func UpdateUser(c *gin.Context) {
 	var data models.User
-	id, _ := strconv.Atoi(c.Param("id"))
-	_ = c.ShouldBindJSON(&data)
-
-	code := models.CheckUser(uint(id), "")
-	if code == errmsg.Success {
-		code = models.UpdateUser(uint(id), &data)
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "invalid id")})
+		return
 	}
-	c.JSON(
-		http.StatusOK, gin.H{
-			"status":  code,
-			"message": errmsg.GetErrMsg(code),
-		},
-	)
+
+	if err := models.CheckUser(uint(id), ""); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.Wrap(err, "user check failed")})
+		return
+	}
+
+	if err := models.UpdateUser(uint(id), &data); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to update user")})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "User updated successfully",
+	})
 }
 
 // GetUser 查询用户
 func GetUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	var maps = make(map[string]interface{})
-	data, code := models.GetUser(id)
-
-	maps["id"] = data.ID
-	maps["name"] = data.Name
-	maps["role"] = data.Role
-	c.JSON(
-		http.StatusOK, gin.H{
-			"status":  code,
-			"data":    maps,
-			"total":   1,
-			"message": errmsg.GetErrMsg(code),
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.Wrap(err, "invalid id"),
 		})
+		return
+	}
+	data, err := models.GetUser(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "failed to get user"),
+		})
+		return
+	}
+	responseData := map[string]interface{}{
+		"id":   data.ID,
+		"name": data.Name,
+		"role": data.Role,
+	}
+	c.JSON(http.StatusOK, responseData)
 }
 
 // GetUserPage 获取用户列表
 func GetUserPage(c *gin.Context) {
-	pageSize, _ := strconv.Atoi(c.Query("pagesize"))
-	pageNum, _ := strconv.Atoi(c.Query("pagenum"))
+	pageSizeStr := c.Query("pagesize")
+	pageNumStr := c.Query("pagenum")
 	username := c.Query("username")
 
-	switch {
-	case pageSize >= 100:
-		pageSize = 100
-	case pageSize <= 0:
-		pageSize = 10
-	case pageNum <= 0:
-		pageNum = 10
-	case pageNum == 0:
-		pageNum = 1
-	}
-	data, total, code := models.GetUserPage(username, pageSize, pageNum)
+	var pageSize, pageNum int
+	var err error
 
-	c.JSON(
-		http.StatusOK, gin.H{
-			"status":  code,
-			"data":    data,
-			"total":   total,
-			"message": errmsg.GetErrMsg(code),
-		},
-	)
+	if pageSizeStr != "" {
+		pageSize, err = strconv.Atoi(pageSizeStr)
+		if err != nil || pageSize < 0 {
+			pageSize = 10 // Default page size
+		}
+		if pageSize > 100 {
+			pageSize = 100 // Maximum page size
+		}
+	} else {
+		pageSize = 10 // Default page size if not provided
+	}
+
+	if pageNumStr != "" {
+		pageNum, err = strconv.Atoi(pageNumStr)
+		if err != nil || pageNum <= 0 {
+			pageNum = 1 // Default page number
+		}
+	} else {
+		pageNum = 1 // Default page number if not provided
+	}
+
+	data, total, err := models.GetUserPage(username, pageSize, pageNum)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.Wrap(err, "failed to get user page")})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    data,
+		"total":   total,
+		"message": "success",
+	})
 }

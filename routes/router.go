@@ -13,6 +13,8 @@ func InitRouter() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	// 中间件
+	r.Use(middleware.ErrorHandler)
 	r.Use(middleware.AddCros())
 
 	r.POST("/createUser", api.AddUser)
